@@ -15,8 +15,8 @@ import {
   VerticalStepper,
   ItemStatus,
 } from "@ledgerhq/native-ui";
+import { useTheme } from "@react-navigation/native";
 import { Item } from "@ledgerhq/native-ui/components/Layout/List/types";
-// import { log } from "@ledgerhq/logs";
 import { DeviceInfo, FirmwareUpdateContext } from "@ledgerhq/types-live";
 
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -24,7 +24,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Observable } from "rxjs";
-// import { scan, tap } from "rxjs/operators";
 import { updateMainNavigatorVisibility } from "../../actions/appstate";
 import {
   AllowManager,
@@ -41,6 +40,7 @@ import {
 import { ManagerNavigatorStackParamList } from "../../components/RootNavigator/types/ManagerNavigator";
 import { ScreenName } from "../../const";
 import {
+  renderAllowLanguageInstallation,
   renderImageCommitRequested,
   renderImageLoadRequested,
 } from "../../components/DeviceAction/rendering";
@@ -120,6 +120,8 @@ export const FirmwareUpdate = ({
 }: FirmwareUpdateProps) => {
   const navigation = useNavigation();
   const { t } = useTranslation();
+  const { dark } = useTheme();
+  const theme: "dark" | "light" = dark ? "dark" : "light";
   const dispatch = useDispatch();
 
   const quitUpdate = useCallback(() => {
@@ -138,11 +140,17 @@ export const FirmwareUpdate = ({
 
   const [fullUpdateComplete, setFullUpdateComplete] = useState(false);
 
-  const { updateActionState, updateStep, retryUpdate, staxLoadImageState } =
-    useUpdateFirmwareAndRestoreSettings({
-      updateFirmwareAction,
-      device,
-    });
+  const {
+    updateActionState,
+    updateStep,
+    retryUpdate,
+    staxLoadImageState,
+    installLanguageState,
+  } = useUpdateFirmwareAndRestoreSettings({
+    updateFirmwareAction,
+    device,
+    deviceInfo,
+  });
 
   useEffect(() => {
     if (updateStep === "completed") {
@@ -164,6 +172,19 @@ export const FirmwareUpdate = ({
           start: ItemStatus.inactive,
           imageBackup: ItemStatus.inactive,
           firmwareUpdate: ItemStatus.inactive,
+          languageRestore: ItemStatus.active,
+          imageRestore: ItemStatus.completed,
+          appsRestore: ItemStatus.completed,
+          completed: ItemStatus.completed,
+        }[updateStep],
+        progress: installLanguageState.progress,
+        title: t("FirmwareUpdate.steps.restoreSettings.restoreLanguage"),
+      },
+      {
+        status: {
+          start: ItemStatus.inactive,
+          imageBackup: ItemStatus.inactive,
+          firmwareUpdate: ItemStatus.inactive,
           languageRestore: ItemStatus.inactive,
           imageRestore: ItemStatus.active,
           appsRestore: ItemStatus.completed,
@@ -174,9 +195,8 @@ export const FirmwareUpdate = ({
           "FirmwareUpdate.steps.restoreSettings.restoreLockScreenPicture",
         ),
       },
-      // TODO: add here the apps and language steps when they're implemented
     ],
-    [staxLoadImageState.progress, t, updateStep],
+    [updateStep, installLanguageState.progress, t, staxLoadImageState.progress],
   );
 
   const defaultSteps: UpdateSteps = useMemo(
@@ -425,6 +445,15 @@ export const FirmwareUpdate = ({
       return renderImageCommitRequested({ t, device, fullScreen: false });
     }
 
+    if (installLanguageState.languageInstallationRequested) {
+      return renderAllowLanguageInstallation({
+        t,
+        device,
+        theme,
+        fullScreen: false,
+      });
+    }
+
     return undefined;
   }, [
     updateActionState.error,
@@ -433,6 +462,7 @@ export const FirmwareUpdate = ({
     staxLoadImageState.error,
     staxLoadImageState.imageLoadRequested,
     staxLoadImageState.imageCommitRequested,
+    installLanguageState.languageInstallationRequested,
     device,
     t,
     quitUpdate,
