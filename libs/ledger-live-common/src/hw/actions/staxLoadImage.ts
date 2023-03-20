@@ -14,7 +14,7 @@ import type { Action, Device } from "./types";
 import { currentMode } from "./app";
 import { getImplementation } from "./implementations";
 
-type State = {
+export type State = {
   isLoading: boolean;
   requestQuitApp: boolean;
   unresponsive: boolean;
@@ -48,7 +48,7 @@ type Event =
       device: Device | null | undefined;
     };
 
-export const getInitialState = (
+const getInitialState = (
   device?: Device | null | undefined
 ): State => ({
   isLoading: !!device,
@@ -61,7 +61,7 @@ export const getInitialState = (
   imageHash: "",
 });
 
-export const reducer = (
+const reducer = (
   state: State,
   e: Event
 ): State => {
