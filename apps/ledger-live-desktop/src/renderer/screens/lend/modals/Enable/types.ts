@@ -2,6 +2,7 @@ import { TFunction } from "react-i18next";
 import { Device } from "@ledgerhq/live-common/hw/actions/types";
 import { Step } from "~/renderer/components/Stepper";
 import { Account, AccountLike, Operation } from "@ledgerhq/types-live";
+// eslint-disable-next-line no-restricted-imports
 import { Transaction, TransactionStatus } from "@ledgerhq/live-common/families/ethereum/types";
 export type StepId = "amount" | "connectDevice" | "confirmation";
 export type StepProps = {
