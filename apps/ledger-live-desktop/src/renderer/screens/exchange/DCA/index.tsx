@@ -1,11 +1,10 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
+import React, { useState } from "react";
 import { Route } from "react-router-dom";
 import styled from "styled-components";
 import Box from "~/renderer/components/Box";
 import Text from "~/renderer/components/Text";
-import SwapForm from "./Form";
-import SwapHistory from "./History";
+import DCAForm from "./Form";
+import DCAHistory from "./History";
 import SwapNavbar from "./Navbar";
 
 const Body = styled(Box)`
@@ -29,19 +28,32 @@ const Main = styled.main`
   }
 `;
 
+export type DCAHistory = {
+  from: { currency?: string; address?: string };
+  to: { currency?: string; address?: string };
+  amount: string;
+  interval: string;
+};
+
 const Swap2 = () => {
-  const { t } = useTranslation();
+  const [history, setHistory] = useState<DCAHistory[]>([]);
+
+  const addHistory = (newDCA: DCAHistory) => setHistory(historyState => [...historyState, newDCA]);
 
   return (
     <>
       <Text mb={20} ff="Inter|SemiBold" fontSize={7} color="palette.text.shade100">
-        {t("swap2.title")}
+        {"Dollar Cost Average"}
       </Text>
       <Body>
         <SwapNavbar />
         <Main>
-          <Route path="/swap" component={SwapForm} exact />
-          <Route path="/swap/history" component={SwapHistory} exact />
+          <Route path="/dca" exact>
+            <DCAForm addHistory={addHistory} />
+          </Route>
+          <Route path="/dca/history" exact>
+            <DCAHistory history={history} />
+          </Route>
         </Main>
       </Body>
     </>

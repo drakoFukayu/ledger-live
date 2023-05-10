@@ -15,6 +15,7 @@ import Manager from "~/renderer/screens/manager";
 import Exchange from "~/renderer/screens/exchange";
 import Earn from "./screens/earn";
 import Swap2 from "~/renderer/screens/exchange/Swap2";
+import DCA from "~/renderer/screens/exchange/DCA";
 import USBTroubleshooting from "~/renderer/screens/USBTroubleshooting";
 import Account from "~/renderer/screens/account";
 import Asset from "~/renderer/screens/asset";
@@ -127,6 +128,7 @@ const NightlyLayerR = () => {
     </div>
   );
 };
+
 const NightlyLayer = React.memo(NightlyLayerR);
 
 export default function Default() {
@@ -237,6 +239,7 @@ export default function Default() {
                             <Route path="/account/:id" component={Account} />
                             <Route path="/asset/:assetId+" component={Asset} />
                             <Route path="/swap" component={Swap2} />
+                            <Route path="/dca" component={DCA} />
                             <Route path="/market/:currencyId" component={MarketCoinScreen} />
                             <Route path="/market" component={Market} />
                             <FeatureToggle feature="learn">

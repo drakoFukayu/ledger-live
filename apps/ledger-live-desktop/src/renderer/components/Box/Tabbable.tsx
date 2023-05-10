@@ -31,6 +31,7 @@ export default class Tabbable extends Component<
     className?: string;
     style?: React.CSSProperties;
     color?: string;
+    id?: string;
   } & BoxProps,
   { isFocused: boolean }
 > {

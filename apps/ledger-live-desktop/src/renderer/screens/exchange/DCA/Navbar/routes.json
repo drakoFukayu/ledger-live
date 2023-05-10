@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/dca",
+    "title": "DCA",
+    "name": "Exchange",
+    "disabled": false
+  },
+  {
+    "path": "/dca/history",
+    "title": "History",
+    "name": "History",
+    "disabled": false
+  }
+]

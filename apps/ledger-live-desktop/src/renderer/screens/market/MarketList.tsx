@@ -27,6 +27,8 @@ export const TableCellBase: StyledComponent<"div", DefaultTheme, FlexProps> = st
 })<{ disabled?: boolean }>`
   padding-left: 5px;
   padding-right: 5px;
+  width: 200px;
+
   cursor: ${p => (p.disabled ? "default" : "pointer")};
 `;
 

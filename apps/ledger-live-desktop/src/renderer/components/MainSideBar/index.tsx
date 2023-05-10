@@ -300,6 +300,10 @@ const MainSideBar = () => {
     push("/swap");
     trackEntry("swap");
   }, [push, trackEntry]);
+  const handleClickDCA = useCallback(() => {
+    push("/dca");
+    trackEntry("dca");
+  }, [push, trackEntry]);
   const handleClickRefer = useCallback(() => {
     if (referralProgramConfig?.enabled && referralProgramConfig?.params.path) {
       push(referralProgramConfig?.params.path);
@@ -449,6 +453,16 @@ const MainSideBar = () => {
                   iconActiveColor="wallet"
                   onClick={handleClickSwap}
                   isActive={location.pathname.startsWith("/swap")}
+                  disabled={noAccounts}
+                  collapsed={secondAnim}
+                />
+                <SideBarListItem
+                  id={"dca"}
+                  label={"DCA"}
+                  icon={IconEarn}
+                  iconActiveColor="wallet"
+                  onClick={handleClickDCA}
+                  isActive={location.pathname.startsWith("/dca")}
                   disabled={noAccounts}
                   collapsed={secondAnim}
                 />
