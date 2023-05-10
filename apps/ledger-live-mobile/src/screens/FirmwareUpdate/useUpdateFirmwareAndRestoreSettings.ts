@@ -54,9 +54,13 @@ export const useUpdateFirmwareAndRestoreSettings = ({
     updateFirmwareAction,
   });
 
+  const installLanguageRequest = useMemo(
+    () => ({ language: idsToLanguage[deviceInfo.languageId ?? 0] }),
+    [deviceInfo.languageId],
+  );
   const installLanguageState = installLanguageAction.useHook(
     updateStep === "languageRestore" ? device : null,
-    idsToLanguage[deviceInfo.languageId ?? 0],
+    installLanguageRequest,
   );
 
   const staxLoadImageRequest = useMemo(
