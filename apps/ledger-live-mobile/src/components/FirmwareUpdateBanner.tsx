@@ -157,7 +157,7 @@ const FirmwareUpdateBanner = ({
   const onClickUpdate = useCallback(() => {
     if (isUsbFwVersionUpdateSupported) {
       if (lastConnectedDevice?.modelId === DeviceModelId.stax) {
-        staxBattery && staxBattery.percentage < 50 && !staxBattery.charging
+        staxBattery && staxBattery.percentage < 20 && !staxBattery.charging
           ? setShowBatteryWarningDrawer(true)
           : onExperimentalFirmwareUpdate();
       } else {
