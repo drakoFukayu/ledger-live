@@ -22,6 +22,7 @@ import StepImport, { StepImportFooter } from "./steps/StepImport";
 import StepFinish, { StepFinishFooter } from "./steps/StepFinish";
 import { blacklistedTokenIdsSelector } from "~/renderer/reducers/settings";
 type Props = {
+  pro?: boolean;
   device: Device | undefined | null;
   existingAccounts: Account[];
   closeModal: (a: string) => void;
@@ -141,15 +142,18 @@ class AddAccounts extends PureComponent<Props, State> {
   state = INITIAL_STATE;
   STEPS = createSteps(this.props.currency && !this.props.preventSkippingCurrencySelection);
   handleClickAdd = async () => {
-    const { replaceAccounts, existingAccounts } = this.props;
+    const { replaceAccounts, existingAccounts, pro } = this.props;
     const { scannedAccounts, checkedAccountsIds, editedNames } = this.state;
+    const accounts = addAccounts({
+      scannedAccounts,
+      existingAccounts,
+      selectedIds: checkedAccountsIds,
+      renamings: editedNames,
+    });
+
+    // So, another ugly piece of code to make a pro scan a pro account, dont judge me.
     replaceAccounts(
-      addAccounts({
-        scannedAccounts,
-        existingAccounts,
-        selectedIds: checkedAccountsIds,
-        renamings: editedNames,
-      }),
+      pro ? accounts.map(a => ({ ...a, pro: checkedAccountsIds.includes(a.id) })) : accounts,
     );
   };
 
@@ -226,6 +230,7 @@ class AddAccounts extends PureComponent<Props, State> {
 
   render() {
     const {
+      pro,
       device,
       existingAccounts,
       blacklistedTokenIds,
@@ -243,6 +248,7 @@ class AddAccounts extends PureComponent<Props, State> {
     } = this.state;
     let { stepId } = this.state;
     const stepperProps = {
+      pro,
       currency,
       device,
       existingAccounts,
@@ -261,7 +267,7 @@ class AddAccounts extends PureComponent<Props, State> {
       editedNames,
       flow,
     };
-    const title = <Trans i18nKey="addAccounts.title" />;
+    const title = pro ? "{PRO} Add account" : <Trans i18nKey="addAccounts.title" />;
     const errorSteps = err ? [2] : [];
     if (stepId === "chooseCurrency" && this.props.currency && !preventSkippingCurrencySelection) {
       stepId = "connectDevice";
