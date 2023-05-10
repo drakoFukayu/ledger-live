@@ -11,6 +11,7 @@ export const groupedFeatures: Record<
     featureIds: [
       "customImage",
       "deviceInitialApps",
+      "llmNewDeviceSelection",
       "postOnboardingAssetsTransfer",
       "postOnboardingClaimNft",
       "staxWelcomeScreen",
