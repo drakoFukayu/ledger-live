@@ -56,7 +56,14 @@ export type StepProps = {
 
   selectedProIndex?: number;
   setSelectedProIndex: (index: number) => void;
+
   pending?: any;
   setPending?: any;
+
+  proInitiateData: string;
+  setProInitiateData: (a: string) => void;
+
+  approvalData: string;
+  setApprovalData: (a: string) => void;
 };
 export type St = Step<StepId, StepProps>;

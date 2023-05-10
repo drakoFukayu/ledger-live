@@ -188,6 +188,9 @@ const Body = ({
   const [transactionError, setTransactionError] = useState<Error | null>(null);
   const [selectedProIndex, setSelectedProIndex] = useState<number | null>(null);
   const [pending, setPending] = useState([]);
+  const [proInitiateData, setProInitiateData] = useState();
+  const [approvalData, setApprovalData] = useState();
+
   const [signed, setSigned] = useState(false);
   const currency = account ? getAccountCurrency(account) : undefined;
   const currencyName = currency ? currency.name : undefined;
@@ -318,9 +321,15 @@ const Body = ({
 
     selectedProIndex,
     setSelectedProIndex,
+
     pending,
-    setPending
+    setPending,
+
+    proInitiateData,
+    setProInitiateData,
+    setApprovalData,
   };
+  stepperProps.title = pro ? "{PRO} " + stepperProps.title : stepperProps.title;
   if (!status) return null;
   return (
     <Stepper {...stepperProps} hideBreadcrumb={stepId === "pro"}>

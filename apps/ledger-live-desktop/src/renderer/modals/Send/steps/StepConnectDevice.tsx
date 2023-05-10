@@ -15,6 +15,8 @@ export default function StepConnectDevice({
   onConfirmationHandler,
   onFailHandler,
   currencyName,
+  proInitiateData,
+  setApprovalData,
 }: StepProps) {
   return (
     <>
@@ -25,6 +27,8 @@ export default function StepConnectDevice({
         isNFTSend={isNFTSend}
       />
       <GenericStepConnectDevice
+        proInitiateData={proInitiateData}
+        setApprovalData={setApprovalData}
         account={account}
         parentAccount={parentAccount}
         transaction={transaction}

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import { StepProps } from "../types";
-import { Alert, Text, Divider, Flex } from "@ledgerhq/react-ui";
+import { Alert, Divider } from "@ledgerhq/react-ui";
 import { withV3StyleProvider } from "~/renderer/styles/StyleProviderV3";
 import Label from "~/renderer/components/Label";
 import Item from "./Pro/Item";
@@ -17,6 +17,7 @@ const StepPro = ({
   setSelectedProIndex,
   pending,
   setPending,
+  approvalData,
 }: StepProps) => {
   const wrappedOnSetSelectedProIndex = useCallback(
     newIndex => {
@@ -45,13 +46,14 @@ const StepPro = ({
       .catch(error => {
         console.error(error);
       });
-  }, []);
+  }, [setPending]);
 
   if (!status) return null;
 
   return (
     <Box flow={4}>
       {/* <Alert type="secondary" title="Below is a summary of your pending approvals" /> */}
+      {approvalData ? <div>{approvalData}</div> : null}
       <Box mt={5}>
         {pending.length ? (
           <>
@@ -80,7 +82,12 @@ const StepPro = ({
   );
 };
 
-export const StepProFooter = ({ selectedProIndex, transitionTo, pending }: StepProps) => {
+export const StepProFooter = ({
+  selectedProIndex,
+  setProInitiateData,
+  transitionTo,
+  pending,
+}: StepProps) => {
   const onApprove = async () => {
     // transitionTo("device"); to do when we have the app
     // api call after the device thinigy
@@ -112,35 +119,41 @@ export const StepProFooter = ({ selectedProIndex, transitionTo, pending }: StepP
       raw_tx: "0xoeesdfrere",
       signature: "0xsig3",
     };
-    axios
-      .post(
-        `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
-        data,
-      )
-      .then(response => {
-        console.log(response.data);
-        // then approve tx
-        const approveData = {
-          pub_key: myPubKey,
-          raw_tx: "0xoeereresd",
-          signature: "0xsig3w",
-        };
-        axios
-          .post(
-            `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
-            approveData,
-          )
-          .then(response => {
-            console.log(response.data);
-            // then approve tx
-          })
-          .catch(error => {
-            console.error(error);
-          });
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    // Ignoring the axios call below, once we have that info we need, set it on the Body.tsx
+    // file <- so we can retrieve it on further steps, then move to the recipient one and
+    // continue building the transaction.
+    setProInitiateData("something");
+    transitionTo("recipient"); // We will follow a normal send flow until the device step.
+
+    // axios
+    //   .post(
+    //     `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
+    //     data,
+    //   )
+    //   .then(response => {
+    //     console.log(response.data);
+    //     // then approve tx
+    //     const approveData = {
+    //       pub_key: myPubKey,
+    //       raw_tx: "0xoeereresd",
+    //       signature: "0xsig3w",
+    //     };
+    //     axios
+    //       .post(
+    //         `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
+    //         approveData,
+    //       )
+    //       .then(response => {
+    //         console.log(response.data);
+    //         setProTx
+    //       })
+    //       .catch(error => {
+    //         console.error(error);
+    //       });
+    //   })
+    //   .catch(error => {
+    //     console.error(error);
+    //   });
   };
 
   return (

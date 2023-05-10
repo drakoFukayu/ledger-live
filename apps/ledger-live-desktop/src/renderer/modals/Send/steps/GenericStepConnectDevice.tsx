@@ -43,6 +43,8 @@ export default function StepConnectDevice({
   setSigned,
   onConfirmationHandler,
   onFailHandler,
+  proInitiateData,
+  setApprovalData,
 }: {
   transitionTo: (a: string) => void;
   account: AccountLike | undefined | null;
@@ -54,6 +56,8 @@ export default function StepConnectDevice({
   setSigned: (a: boolean) => void;
   onConfirmationHandler?: Function;
   onFailHandler?: Function;
+  proInitiateData?: string;
+  setApprovalData?: (a: string) => void;
 }) {
   const dispatch = useDispatch();
   const broadcast = useBroadcast({
@@ -74,39 +78,48 @@ export default function StepConnectDevice({
       }}
       Result={Result}
       onResult={result => {
-        if ("signedOperation" in result) {
-          const { signedOperation } = result;
-          setSigned(true);
-          broadcast(signedOperation).then(
-            operation => {
-              if (!onConfirmationHandler) {
-                onOperationBroadcasted(operation);
-                transitionTo("confirmation");
-              } else {
-                dispatch(closeModal("MODAL_SEND"));
-                onConfirmationHandler(operation);
-              }
-            },
-            error => {
-              if (!onFailHandler) {
-                onTransactionError(error);
-                transitionTo("confirmation");
-              } else {
-                dispatch(closeModal("MODAL_SEND"));
-                onFailHandler(error);
-              }
-            },
-          );
-        } else if ("transactionSignError" in result) {
-          const { transactionSignError } = result;
-          if (!onFailHandler) {
-            onTransactionError(transactionSignError);
-            transitionTo("confirmation");
-          } else {
-            dispatch(closeModal("MODAL_SEND"));
-            onFailHandler(transactionSignError);
-          }
+        console.log("wadus", { proInitiateData, result });
+        // Hijack the broadcast thing here, go back to the pro step with the
+        // result, we can actually broadcast or do the final device interaction
+        // there too to be as ugly as possible.
+        if (proInitiateData && setApprovalData) {
+          setApprovalData(JSON.stringify(result));
+          transitionTo("pro");
         }
+
+        //   if ("signedOperation" in result) {
+        //     const { signedOperation } = result;
+        //     setSigned(true);
+        //     broadcast(signedOperation).then(
+        //       operation => {
+        //         if (!onConfirmationHandler) {
+        //           onOperationBroadcasted(operation);
+        //           transitionTo("confirmation");
+        //         } else {
+        //           dispatch(closeModal("MODAL_SEND"));
+        //           onConfirmationHandler(operation);
+        //         }
+        //       },
+        //       error => {
+        //         if (!onFailHandler) {
+        //           onTransactionError(error);
+        //           transitionTo("confirmation");
+        //         } else {
+        //           dispatch(closeModal("MODAL_SEND"));
+        //           onFailHandler(error);
+        //         }
+        //       },
+        //     );
+        //   } else if ("transactionSignError" in result) {
+        //     const { transactionSignError } = result;
+        //     if (!onFailHandler) {
+        //       onTransactionError(transactionSignError);
+        //       transitionTo("confirmation");
+        //     } else {
+        //       dispatch(closeModal("MODAL_SEND"));
+        //       onFailHandler(transactionSignError);
+        //     }
+        //   }
       }}
       analyticsPropertyFlow="send"
     />
