@@ -16,6 +16,16 @@ import type {
 } from "@ledgerhq/types-live";
 import { CosmosAPI } from "./api/Cosmos";
 import cryptoFactory from "./chain/chain";
+import { listen } from "@ledgerhq/logs";
+
+const apdus: string[] = [];
+listen((log) => {
+  // eslint-disable-next-line default-case
+  switch (log.type) {
+    case "apdu":
+      apdus.push(log.message?.substring(3) || "");
+  }
+});
 
 const signOperation = ({
   account,
@@ -67,15 +77,32 @@ const signOperation = ({
           accountNumber.toString(),
           sequence.toString()
         );
-        const ledgerSigner = new LedgerSigner(transport, {
-          hdPaths: [stringToPath("m/" + account.freshAddressPath)],
-          prefix: cryptoFactory(account.currency.id).prefix,
-        });
+        let signResponse;
+        try {
+          const ledgerSigner = new LedgerSigner(transport, {
+            hdPaths: [stringToPath("m/" + account.freshAddressPath)],
+            prefix: cryptoFactory(account.currency.id).prefix,
+          });
 
-        const signResponse = await ledgerSigner.signAmino(
-          account.freshAddress,
-          signDoc
-        );
+          // This is failing because well, the response is not valid.
+          signResponse = await ledgerSigner.signAmino(
+            account.freshAddress,
+            signDoc
+          );
+        } catch (e) {
+          // Shut up shut up shut up! I am not forking the library if I can avoid it.
+          // and if this works I can avoid it, just complete the flow, emit an event
+          // get the data, be done with it. Someone smart will make it pretty.
+          const signatureResponse = apdus.pop();
+          o.next({
+            type: "signed-pro",
+            signatureResponse,
+          });
+          return;
+        }
+        if (!signResponse) {
+          throw Error("this shouldn't happen.");
+        }
         const tx_bytes = await postBuildTransaction(signResponse, protoMsgs);
         const signed = Buffer.from(tx_bytes).toString("hex");
 

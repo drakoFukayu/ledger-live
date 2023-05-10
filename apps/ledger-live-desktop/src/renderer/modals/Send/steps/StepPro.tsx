@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import { StepProps } from "../types";
-import { Alert, Divider, Flex } from "@ledgerhq/react-ui";
+import { Alert, Divider, Flex, Text } from "@ledgerhq/react-ui";
 import { withV3StyleProvider } from "~/renderer/styles/StyleProviderV3";
 import Label from "~/renderer/components/Label";
 import Item from "./Pro/Item";
@@ -57,7 +57,12 @@ const StepPro = ({
     <Box flow={4}>
       {/* <Alert type="secondary" title="Below is a summary of your pending approvals" /> */}
       {approvalData ? (
-        <div>{approvalData}</div>
+        <Flex flexDirection="column" flex={1}>
+          <Alert type="warning" title="This is the device response, no idea what to do with it." />
+          <Text mt={4} variant="body" style={{ wordBreak: "break-all" }}>
+            {approvalData}
+          </Text>
+        </Flex>
       ) : (
         <Box mt={5}>
           {pending.length ? (

@@ -327,7 +327,9 @@ const Body = ({
 
     proInitiateData,
     setProInitiateData,
+
     setApprovalData,
+    approvalData,
   };
   stepperProps.title = pro ? "{PRO} " + stepperProps.title : stepperProps.title;
   if (!status) return null;

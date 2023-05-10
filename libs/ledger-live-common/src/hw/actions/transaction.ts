@@ -1,7 +1,6 @@
 import { of, Observable } from "rxjs";
 import { scan, catchError, tap } from "rxjs/operators";
 import { useEffect, useState } from "react";
-import { log } from "@ledgerhq/logs";
 import { TransportStatusError } from "@ledgerhq/errors";
 import type { Transaction, TransactionStatus } from "../../generated/types";
 import { TransactionRefusedOnDevice } from "../../errors";
@@ -18,11 +17,13 @@ import type {
   SignOperationEvent,
 } from "@ledgerhq/types-live";
 import type { TokenCurrency } from "@ledgerhq/types-cryptoassets";
+import { log } from "winston";
 type State = {
   signedOperation: SignedOperation | null | undefined;
   deviceSignatureRequested: boolean;
   deviceStreamingProgress: number | null | undefined;
   transactionSignError: Error | null | undefined;
+  signatureResponse: string | null | undefined;
 };
 type TransactionState = AppState & State;
 type TransactionRequest = {
@@ -42,6 +43,9 @@ type TransactionResult =
       swapId?: string;
     }
   | {
+      signatureResponse: string;
+    }
+  | {
       transactionSignError: Error;
     };
 type TransactionAction = Action<
@@ -53,12 +57,17 @@ type TransactionAction = Action<
 const mapResult = ({
   device,
   signedOperation,
+  signatureResponse,
   transactionSignError,
 }: TransactionState): TransactionResult | null | undefined =>
   signedOperation && device
     ? {
         signedOperation,
         device,
+      }
+    : signatureResponse
+    ? {
+        signatureResponse,
       }
     : transactionSignError
     ? {
@@ -69,17 +78,23 @@ const mapResult = ({
 type Event =
   | SignOperationEvent
   | {
+      type: "signed-pro";
+      signatureResponse: string;
+    }
+  | {
       type: "error";
       error: Error;
     };
 const initialState = {
   signedOperation: null,
+  signatureResponse: null,
   deviceSignatureRequested: false,
   deviceStreamingProgress: null,
   transactionSignError: null,
 };
 
 const reducer = (state: State, e: Event): State => {
+  // {type: 'signed-pro', signatureResponse: '304402205776709f9d91f92706734a2093b1bd78cb72c25916…b56f0ffa795d5ba54be1692eb6fee284fa583be5bb4609000'}
   switch (e.type) {
     case "error": {
       const { error } = e;
@@ -93,6 +108,15 @@ const reducer = (state: State, e: Event): State => {
 
     case "signed":
       return { ...state, signedOperation: e.signedOperation };
+
+    // For the hackathon
+    case "signed-pro":
+      return {
+        ...state,
+        deviceSignatureRequested: false,
+        deviceStreamingProgress: null,
+        signatureResponse: e.signatureResponse,
+      };
 
     case "device-signature-requested":
       return { ...state, deviceSignatureRequested: true };
@@ -149,7 +173,10 @@ export const createAction = (
               error,
             })
           ),
-          tap((e: Event) => log("actions-transaction-event", e.type, e)),
+          tap((e: Event) => {
+            log("actions-transaction-event", e.type, e);
+            console.log("actions-transaction-event", e.type, e);
+          }),
           scan(reducer, initialState)
         )
         .subscribe((x: any) => setState(x));
@@ -168,7 +195,9 @@ export const createAction = (
       ...appState,
       ...state,
       deviceStreamingProgress:
-        state.signedOperation || state.transactionSignError
+        state.signedOperation ||
+        state.transactionSignError ||
+        state.signatureResponse
           ? null // when good app is opened, we start the progress so it doesn't "blink"
           : state.deviceStreamingProgress || (appState.opened ? 0 : null),
     };
