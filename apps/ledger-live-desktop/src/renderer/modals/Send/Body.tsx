@@ -187,6 +187,7 @@ const Body = ({
   const [optimisticOperation, setOptimisticOperation] = useState<Operation | null>(null);
   const [transactionError, setTransactionError] = useState<Error | null>(null);
   const [selectedProIndex, setSelectedProIndex] = useState<number | null>(null);
+  const [pending, setPending] = useState([]);
   const [signed, setSigned] = useState(false);
   const currency = account ? getAccountCurrency(account) : undefined;
   const currencyName = currency ? currency.name : undefined;
@@ -317,6 +318,8 @@ const Body = ({
 
     selectedProIndex,
     setSelectedProIndex,
+    pending,
+    setPending
   };
   if (!status) return null;
   return (

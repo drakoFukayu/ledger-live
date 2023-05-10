@@ -8,7 +8,7 @@ import Label from "~/renderer/components/Label";
 import Item from "./Pro/Item";
 import axios from 'axios';
 
-const StepPro = ({ status, selectedProIndex, setSelectedProIndex }: StepProps) => {
+const StepPro = ({ status, selectedProIndex, setSelectedProIndex, pending, setPending }: StepProps) => {
   const wrappedOnSetSelectedProIndex = useCallback(
     newIndex => {
       // Toggle if reclicked;
@@ -16,8 +16,6 @@ const StepPro = ({ status, selectedProIndex, setSelectedProIndex }: StepProps) =
     },
     [selectedProIndex, setSelectedProIndex],
   );
-
-  const [pending, setPending] = useState([]);
 
   useEffect(() => {
     axios.get('https://ledger-live-pro.minivault.ledger-sbx.com/router/test_hk7/dashboard')
@@ -72,13 +70,14 @@ const StepPro = ({ status, selectedProIndex, setSelectedProIndex }: StepProps) =
   );
 };
 
-export const StepProFooter = ({ selectedProIndex, transitionTo }: StepProps) => {
+export const StepProFooter = ({ selectedProIndex, transitionTo, pending }: StepProps) => {
   const onApprove = async () => {
       // transitionTo("device"); to do when we have the app
       // api call after the device thinigy
+
       const data = {
           "pub_key": "CCCCC",
-          "raw_tx": "0xdeadbeefe",
+          "raw_tx": pending[selectedProIndex]["hash"],
           "signature": "0xsig3"
       };
       axios.post("https://ledger-live-pro.minivault.ledger-sbx.com/router/test_hk7/transaction/approve", data)
@@ -96,7 +95,7 @@ export const StepProFooter = ({ selectedProIndex, transitionTo }: StepProps) => 
       const data = {
           "memo": "test_txe",
           "pub_key": "CCCCC",
-          "raw_tx": "0xdeadbeefertqw",
+          "raw_tx": pending[selectedProIndex]["hash"],
           "signature": "0xsig3"
       };
       axios.post("https://ledger-live-pro.minivault.ledger-sbx.com/router/test_hk7/transaction/initiate", data)
@@ -105,7 +104,7 @@ export const StepProFooter = ({ selectedProIndex, transitionTo }: StepProps) => 
               // then approve tx
               const approveData = {
                   "pub_key": "CCCCC",
-                  "raw_tx": "0xdeadbeefertqw",
+                  "raw_tx": pending[selectedProIndex]["hash"],
                   "signature": "0xsig3w"
               }
               axios.post("https://ledger-live-pro.minivault.ledger-sbx.com/router/test_hk7/transaction/initiate", approveData)
