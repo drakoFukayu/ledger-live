@@ -9,7 +9,7 @@ import {
   updateFirmwareActionArgs,
 } from "@ledgerhq/live-common/deviceSDK/actions/updateFirmware";
 import { Observable } from "rxjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type FirmwareUpdateParams = {
   device: Device;
@@ -36,9 +36,10 @@ export const useUpdateFirmwareAndRestoreSettings = ({
 }: FirmwareUpdateParams) => {
   const [updateStep, setUpdateStep] = useState<UpdateStep>("start");
 
+  const staxFetchImageRequest = useMemo(() => ({}), []);
   const staxFetchImageState = staxFetchImageAction.useHook(
     updateStep === "imageBackup" ? device : null,
-    "",
+    staxFetchImageRequest,
   );
 
   const { triggerUpdate, updateState: updateActionState } = useUpdateFirmware({
@@ -46,12 +47,18 @@ export const useUpdateFirmwareAndRestoreSettings = ({
     updateFirmwareAction,
   });
 
+  const staxLoadImageRequest = useMemo(
+    () => ({
+      hexImage: staxFetchImageState.hexImage ?? "",
+      padImage: false,
+    }),
+    [staxFetchImageState.hexImage],
+  );
   const staxLoadImageState = staxLoadImageAction.useHook(
     updateStep === "imageRestore" && staxFetchImageState.hexImage
       ? device
       : null,
-    staxFetchImageState.hexImage ?? "",
-    false,
+    staxLoadImageRequest,
   );
 
   useEffect(() => {
