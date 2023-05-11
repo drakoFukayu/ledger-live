@@ -40,7 +40,7 @@ type Props = {
   alreadyApproved?: boolean;
 };
 
-const Item = ({ alreadyApproved, memo, memo2, hash, validators, isSelected, onClick }: Props) => {
+const Item = ({ alreadyApproved, memo, hash, validators, isSelected, onClick }: Props) => {
   return (
     <Wrapper
       p={2}
@@ -61,7 +61,7 @@ const Item = ({ alreadyApproved, memo, memo2, hash, validators, isSelected, onCl
         <Flex flexDirection="column" justifyContent="center">
           <Text variant="body">{memo}</Text>
           <Text variant="small" color="neutral.c70">
-            {memo2}
+            {""}
           </Text>
         </Flex>
         <Hash>

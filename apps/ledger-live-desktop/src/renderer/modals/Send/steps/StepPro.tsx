@@ -62,7 +62,7 @@ const StepPro = ({
             return {
               memo: transaction.memo,
               hash: transaction.hash,
-              validators: [transaction.approvals.length, 3],
+              validators: transaction.approvals,
             };
           });
           console.log(approvedTransactions);
@@ -193,7 +193,7 @@ const StepPro = ({
                 <>
                   {" "}
                   <Label>{"Pending approvals"}</Label>
-                  {pending.map(({ memo, memo2, hash, validators }, index) => (
+                  {pending.map(({ memo, hash, validators }, index) => (
                     <>
                       <Item
                         alreadyApproved={validators.some(
@@ -203,7 +203,6 @@ const StepPro = ({
                         key={hash}
                         hash={hash}
                         memo={memo}
-                        memo2={memo2}
                         validators={validators}
                         onClick={() => wrappedOnSetSelectedProIndex(index)}
                       />
