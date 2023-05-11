@@ -68,6 +68,7 @@ export type StepProps = {
 
   approvalData: string;
   setApprovalData: (a: string) => void;
+  approving: boolean;
   setApproving: (a: boolean) => void;
 };
 export type St = Step<StepId, StepProps>;

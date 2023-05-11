@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import { StepProps } from "../types";
@@ -10,6 +10,8 @@ import axios from "axios";
 import { getCryptoCurrencyById } from "@ledgerhq/coin-framework/currencies";
 import { useDispatch } from "react-redux";
 import { openModal } from "~/renderer/actions/modals";
+import { withDevice } from "@ledgerhq/live-common/hw/deviceAccess";
+import { from } from "rxjs";
 
 const urlBase = "https://ledger-live-pro.minivault.ledger-sbx.com/router";
 const myPubKey =
@@ -25,7 +27,10 @@ const StepPro = ({
     approved,
     setApproved,
   approvalData,
+  setApproving,
+  approving,
 }: StepProps) => {
+  const [signature, setSignature] = useState("");
   const wrappedOnSetSelectedProIndex = useCallback(
     newIndex => {
       // Toggle if reclicked;
@@ -47,10 +52,11 @@ const StepPro = ({
             return {
               memo: transaction.memo,
               hash: transaction.hash,
+              raw_tx: transaction.raw_tx,
               validators: [transaction.approvals.length, 3],
             };
           });
-          console.log(pendingTransactions);
+          console.log("wadus", pendingTransactions);
           setPending(pendingTransactions);
           const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
             return {
@@ -73,6 +79,62 @@ const StepPro = ({
       removed = true;
     };
   }, [setPending]);
+
+  useEffect(() => {
+    console.log({ signature });
+  }, [signature]);
+
+  useEffect(() => {
+    // We are approving, we know the apdus that we need to send and we hope there's a device
+    // connected at this point, just send the apdus and get the response. With that response
+    // we can submit it to the backend again.
+    if (!approving || !pending || selectedProIndex === null || selectedProIndex === undefined)
+      return;
+
+    const rawTx = pending[selectedProIndex].raw_tx;
+    let finished = false;
+    // Straight away try to send apdus to the device and get the response a signer.
+    console.log("shoudl send", rawTx);
+    async function sendApdus() {
+      let signature: any = "";
+      for (let i = 0; i < rawTx.length; i++) {
+        if (finished) return;
+        signature = await withDevice("")(transport => {
+          console.log("sending", rawTx[i]);
+          return from(transport.exchange(Buffer.from(rawTx[i], "hex")));
+        }).toPromise();
+      }
+
+      // TODO on the last one, set some flag to reflect in the UI that we need to approve
+      const postData = {
+        pub_key: myPubKey,
+        raw_tx: rawTx,
+        signature,
+      };
+
+      console.log(postData);
+
+      axios
+        .post(`${urlBase}/${org}/transaction/approve`, postData)
+        .then(response => {
+          // FIXME, do we need to do anything with the response?
+          fetchDashboard();
+          setApproving(false);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+
+      setSignature(signature.toString("hex"));
+      // No error handling, but we need to send the approval thingie now
+    }
+    sendApdus();
+
+    return () => {
+      console.log("unmounting");
+      finished = true;
+    };
+  }, [approving, fetchDashboard, pending, selectedProIndex, setApproving]);
 
   useEffect(() => {
     fetchDashboard();
@@ -112,65 +174,47 @@ const StepPro = ({
 
   return (
     <Box flow={4}>
-      {/* <Alert type="secondary" title="Below is a summary of your pending approvals" /> */}
-      {approvalData ? (
-        <Flex flexDirection="column" flex={1}>
-          <Alert type="warning" title="This is the device response, no idea what to do with it." />
-          <Text mt={4} variant="body" style={{ wordBreak: "break-all" }}>
-            {approvalData}
-          </Text>
-        </Flex>
+      {approving ? (
+        <Alert type="secondary" title={signature || "Approve on your device"} />
       ) : (
-        <Box flow={4}>
-          <Box mt={5}>
-            {pending.length ? (
-              <>
-                {" "}
-                <Label>{"Pending approvals"}</Label>
-                {pending.map(({ memo, memo2, hash, validators }, index) => (
-                  <>
-                    <Item
-                      isSelected={selectedProIndex === index}
-                      key={hash}
-                      hash={`${validators.length} approvers required`}
-                      memo={`tx ${hash.substring(0, 10)}`}
-                      memo2=""
-                      validators={validators}
-                      onClick={() => wrappedOnSetSelectedProIndex(index)}
-                    />
-                    {index === pending.length - 1 ? null : <Divider />}
-                  </>
-                ))}
-              </>
-            ) : (
-              <Alert type="info" title="There are no pending approvals, try creating one" />
-            )}
-          </Box>
-          <Box mt={5}>
-            {approved.length ? (
-              <>
-                {" "}
-                <Label>{"Approved transactions"}</Label>
-                {approved.map(({ memo, memo2, hash, validators }, index) => (
-                  <>
-                    <Item
-                      isSelected={selectedProIndex === index}
-                      key={hash}
-                      hash={"approved"}
-                      memo={`tx ${hash.substring(0, 10)}`}
-                      memo2=""
-                      validators={validators}
-                      onClick={() => wrappedOnSetSelectedProIndex(index)}
-                    />
-                    {index === approved.length - 1 ? null : <Divider />}
-                  </>
-                ))}
-              </>
-            ) : (
-              <Alert type="info" title="There are no pending approvals, try creating one" />
-            )}
-          </Box>
-        </Box>
+        <>
+          {approvalData ? (
+            <Flex flexDirection="column" flex={1}>
+              <Alert
+                type="warning"
+                title="This is the device response, no idea what to do with it."
+              />
+              <Text mt={4} variant="body" style={{ wordBreak: "break-all" }}>
+                {approvalData}
+              </Text>
+            </Flex>
+          ) : (
+            <Box mt={5}>
+              {pending.length ? (
+                <>
+                  {" "}
+                  <Label>{"Pending approvals"}</Label>
+                  {pending.map(({ memo, memo2, hash, validators }, index) => (
+                    <>
+                      <Item
+                        isSelected={selectedProIndex === index}
+                        key={hash}
+                        hash={hash}
+                        memo={memo}
+                        memo2={memo2}
+                        validators={validators}
+                        onClick={() => wrappedOnSetSelectedProIndex(index)}
+                      />
+                      {index === pending.length - 1 ? null : <Divider />}
+                    </>
+                  ))}
+                </>
+              ) : (
+                <Alert type="info" title="There are no pending approvals, try creating one" />
+              )}
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );
@@ -182,6 +226,7 @@ export const StepProFooter = ({
   transitionTo,
   closeModal,
   setApproving,
+  approving,
 }: StepProps) => {
   const dispatch = useDispatch();
 
@@ -207,6 +252,8 @@ export const StepProFooter = ({
     setProInitiateData("something");
     transitionTo("recipient"); // We will follow a normal send flow until the device step.
   }, [setProInitiateData, transitionTo]);
+
+  if (approving) return null;
 
   return (
     <Flex justifyContent="space-between">
