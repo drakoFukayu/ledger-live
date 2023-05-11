@@ -31,7 +31,6 @@ const Hash = styled(Flex)`
 
 type Props = {
   memo: string;
-  memo2: string;
   hash: string;
   validators: [number, number];
 

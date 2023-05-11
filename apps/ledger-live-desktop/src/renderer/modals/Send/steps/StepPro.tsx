@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { openModal } from "~/renderer/actions/modals";
 import { withDevice } from "@ledgerhq/live-common/hw/deviceAccess";
 import { from } from "rxjs";
+import { useBroadcast } from "~/renderer/hooks/useBroadcast";
 
 const urlBase = "https://ledger-live-pro.minivault.ledger-sbx.com/router";
 const myPubKey =
@@ -25,12 +26,23 @@ const StepPro = ({
   pending,
   setPending,
   account,
+  parentAccount,
   approvalData,
+  setApproved,
+  approved,
   setApproving,
+  transitionTo,
+  onTransactionError,
+  onOperationBroadcasted,
   approving,
 }: StepProps) => {
   const [signature, setSignature] = useState("");
-  const [finalAPDU, setFinalAPDU] = useState("");
+  const [finalAPDUS, setFinalAPDUS] = useState<string[] | undefined>([]);
+
+  const broadcast = useBroadcast({
+    account,
+    parentAccount,
+  });
 
   const wrappedOnSetSelectedProIndex = useCallback(
     newIndex => {
@@ -58,21 +70,15 @@ const StepPro = ({
           });
           setPending(pendingTransactions);
 
-          // If part of the data contains a final apdu we can send it to the device and then broadcast it
-          // const hasFinalAPDU = "";
-          // if (hasFinalAPDU) {
-          //   setFinalAPDU("asdas");
-          // }
-
-          // const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
-          //   return {
-          //     memo: transaction.memo,
-          //     hash: transaction.hash,
-          //     validators: transaction.approvals,
-          //   };
-          // });
-          // console.log(approvedTransactions);
-          // setApproved(approvedTransactions);
+          const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
+            return {
+              memo: transaction.memo,
+              hash: transaction.hash,
+              validators: transaction.approvals,
+            };
+          });
+          console.log(approvedTransactions);
+          setApproved(approvedTransactions);
         })
         .catch(error => {
           console.error(error);
@@ -83,39 +89,70 @@ const StepPro = ({
     return () => {
       removed = true;
     };
-  }, [setPending]);
+  }, [setApproved, setPending]);
 
   useEffect(() => {
-    if (!finalAPDU) return;
-    async function sendApdus() {
-      const signedTx: any = await withDevice("")(transport => {
-        console.log("sending", finalAPDU);
-        return from(transport.exchange(Buffer.from(finalAPDU, "hex")));
-      }).toPromise();
+    if (
+      !finalAPDUS ||
+      finalAPDUS.length === 0 ||
+      selectedProIndex === null ||
+      selectedProIndex === undefined
+    )
+      return;
 
-      // broadcast(signedOperation).then(
-      //     operation => {
-      //       if (!onConfirmationHandler) {
-      //         onOperationBroadcasted(operation);
-      //         transitionTo("confirmation");
-      //       } else {
-      //         dispatch(closeModal("MODAL_SEND"));
-      //         onConfirmationHandler(operation);
-      //       }
-      //     },
-      //     error => {
-      //       if (!onFailHandler) {
-      //         onTransactionError(error);
-      //         transitionTo("confirmation");
-      //       } else {
-      //         dispatch(closeModal("MODAL_SEND"));
-      //         onFailHandler(error);
-      //       }
-      //     },
-      //   );
+    let unmounted = false;
+    const rawTx = pending[selectedProIndex].raw_tx;
+
+    async function sendApdus() {
+      // Send the data to the device
+      let signedOperation: any;
+      if (!finalAPDUS) return;
+      for (let i = 0; i < finalAPDUS.length; i++) {
+        if (unmounted) return;
+        signedOperation = await withDevice("")(transport => {
+          console.log("sending", finalAPDUS[i]);
+          return from(transport.exchange(Buffer.from(finalAPDUS[i], "hex")));
+        }).toPromise();
+      }
+
+      if (unmounted) return;
+
+      // Broadcast the transaction
+      broadcast(signedOperation).then(
+        operation => {
+          onOperationBroadcasted(operation);
+          transitionTo("confirmation");
+        },
+        error => {
+          onTransactionError(error);
+          transitionTo("confirmation");
+        },
+      );
+
+      // Tell backend we are done.
+      const postData = {
+        pub_key: myPubKey,
+        raw_tx: rawTx,
+      };
+
+      console.log(postData);
+
+      axios.post(`${urlBase}/${org}/transaction/DONE`, postData);
+      setFinalAPDUS(undefined);
     }
     sendApdus();
-  }, [finalAPDU]);
+    return () => {
+      unmounted = true;
+    };
+  }, [
+    broadcast,
+    finalAPDUS,
+    onOperationBroadcasted,
+    onTransactionError,
+    pending,
+    selectedProIndex,
+    transitionTo,
+  ]);
 
   useEffect(() => {
     // We are approving, we know the apdus that we need to send and we hope there's a device
@@ -150,9 +187,15 @@ const StepPro = ({
       axios
         .post(`${urlBase}/${org}/transaction/approve`, postData)
         .then(response => {
-          // FIXME, do we need to do anything with the response?
           fetchDashboard();
           setApproving(false);
+
+          // The third approval returns an apdu array, if it's present, we can
+          // send them to get a signed transaction and broadcast straightaway.
+          console.log("wadus", { response });
+          if (response.data.apdus) {
+            setFinalAPDUS(response.data.apdus);
+          }
         })
         .catch(error => {
           console.error(error);
@@ -189,8 +232,6 @@ const StepPro = ({
       raw_tx,
       signature: data.signatureResponse,
     };
-
-    console.log(postData);
 
     axios
       .post(`${urlBase}/${org}/transaction/initiate`, postData)
