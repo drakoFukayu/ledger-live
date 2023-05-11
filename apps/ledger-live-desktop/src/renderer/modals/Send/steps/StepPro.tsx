@@ -11,8 +11,10 @@ import { getCryptoCurrencyById } from "@ledgerhq/coin-framework/currencies";
 import { useDispatch } from "react-redux";
 import { openModal } from "~/renderer/actions/modals";
 import { withDevice } from "@ledgerhq/live-common/hw/deviceAccess";
+import { fromOperationRaw } from "@ledgerhq/live-common/account/index";
 import { from } from "rxjs";
 import { useBroadcast } from "~/renderer/hooks/useBroadcast";
+import { OperationRaw } from "@ledgerhq/types-live";
 
 const urlBase = "https://ledger-live-pro.minivault.ledger-sbx.com/router";
 const myPubKey =
@@ -32,6 +34,7 @@ const StepPro = ({
   setApproved,
   approved,
   setApproving,
+  transaction,
   transitionTo,
   onTransactionError,
   onOperationBroadcasted,
@@ -39,6 +42,7 @@ const StepPro = ({
 }: StepProps) => {
   const [signature, setSignature] = useState("");
   const [finalAPDUS, setFinalAPDUS] = useState<string[] | undefined>([]);
+  const [parsedOperation, setParsedOperation] = useState<any>();
 
   const broadcast = useBroadcast({
     account,
@@ -101,7 +105,6 @@ const StepPro = ({
       return;
 
     let unmounted = false;
-    const rawTx = pending[selectedProIndex].raw_tx;
 
     async function sendApdus() {
       // Send the data to the device
@@ -122,12 +125,15 @@ const StepPro = ({
 
       if (unmounted) return;
 
-      // Broadcast the transaction
-      const rawTx = pending[selectedProIndex || 0].raw_tx;
-      // Rebuild the operation from the apdus
-      const operation = {};
-      // TODO Parse the JSON and populate the object :up:
+      console.log("wadus", { parsedOperation });
+      parsedOperation.date = new Date().toISOString();
 
+      const operation = fromOperationRaw(
+        parsedOperation as OperationRaw,
+        "js:2:cosmos:cosmos174fmh8kscmyckzet8zelrr490yz85p5kmpgjr5:", // Hardcoded because no time
+      );
+
+      console.log("wadus", { operation });
       broadcast({ operation, signature }).then(
         operation => {
           onOperationBroadcasted(operation);
@@ -155,12 +161,16 @@ const StepPro = ({
       unmounted = true;
     };
   }, [
+    account,
     broadcast,
     finalAPDUS,
     onOperationBroadcasted,
     onTransactionError,
+    parsedOperation,
     pending,
     selectedProIndex,
+    transaction.amount,
+    transaction.recipient,
     transitionTo,
   ]);
 
@@ -174,7 +184,7 @@ const StepPro = ({
     const rawTx = pending[selectedProIndex].raw_tx;
     let finished = false;
     // Straight away try to send apdus to the device and get the response a signer.
-    console.log("shoudl send", rawTx);
+    console.log("should send", rawTx);
     async function sendApdus() {
       let signature: any = "";
       for (let i = 0; i < rawTx.length; i++) {
@@ -204,6 +214,7 @@ const StepPro = ({
           // send them to get a signed transaction and broadcast straightaway.
           if (response.data.apdus) {
             setFinalAPDUS(response.data.apdus);
+            setParsedOperation(response.data.transaction);
           }
         })
         .catch(error => {
