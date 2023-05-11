@@ -3,13 +3,13 @@ import styled from "styled-components";
 import { Flex, ProgressLoader, Text } from "@ledgerhq/react-ui";
 import { rgba } from "~/renderer/styles/helpers";
 import Ellipsis from "~/renderer/components/Ellipsis";
-import ProgressCircle from "~/renderer/components/ProgressCircle";
 
-const Wrapper = styled(Flex)<{ isSelected: boolean }>`
-  border: 1px solid ${p => (p.isSelected ? p.theme.colors.wallet : "transparent")};
+const Wrapper = styled(Flex)<{ isSelected: boolean; alreadyApproved: boolean }>`
+  border: 1px solid
+    ${p => (p.alreadyApproved ? "green" : p.isSelected ? p.theme.colors.wallet : "transparent")};
   padding: 8px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: ${p => (p.alreadyApproved ? "inherit" : "pointer")};
 `;
 const Progress = styled(Flex)`
   padding: 10px;
@@ -37,11 +37,19 @@ type Props = {
 
   isSelected: boolean;
   onClick: () => void;
+  alreadyApproved?: boolean;
 };
 
-const Item = ({ memo, memo2, hash, validators, isSelected, onClick }: Props) => {
+const Item = ({ alreadyApproved, memo, memo2, hash, validators, isSelected, onClick }: Props) => {
   return (
-    <Wrapper p={2} my={4} isSelected={isSelected} onClick={onClick} alignItems="center">
+    <Wrapper
+      p={2}
+      my={4}
+      isSelected={isSelected}
+      onClick={alreadyApproved ? undefined : onClick}
+      alignItems="center"
+      alreadyApproved={alreadyApproved}
+    >
       <Progress>
         <ProgressLoader
           showPercentage={false}

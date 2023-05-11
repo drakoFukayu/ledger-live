@@ -24,8 +24,8 @@ const StepPro = ({
   setSelectedProIndex,
   pending,
   setPending,
-    approved,
-    setApproved,
+  approved,
+  setApproved,
   approvalData,
   setApproving,
   approving,
@@ -53,7 +53,7 @@ const StepPro = ({
               memo: transaction.memo,
               hash: transaction.hash,
               raw_tx: transaction.raw_tx,
-              validators: [transaction.approvals.length, 3],
+              validators: transaction.approvals,
             };
           });
           console.log("wadus", pendingTransactions);
@@ -197,6 +197,9 @@ const StepPro = ({
                   {pending.map(({ memo, memo2, hash, validators }, index) => (
                     <>
                       <Item
+                        alreadyApproved={validators.some(
+                          validator => validator.device === myPubKey,
+                        )}
                         isSelected={selectedProIndex === index}
                         key={hash}
                         hash={hash}
