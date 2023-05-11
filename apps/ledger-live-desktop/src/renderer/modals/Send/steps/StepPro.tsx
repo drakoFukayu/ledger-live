@@ -156,6 +156,7 @@ const StepPro = ({
       console.log("DONE", { postData });
 
       axios.post(`${urlBase}/${org}/transaction/DONE`, postData);
+      console.log("DONE", { postData });
       setSignedShit(signature);
       setFinalAPDUS(undefined);
     }
@@ -172,8 +173,6 @@ const StepPro = ({
     parsedOperation,
     pending,
     selectedProIndex,
-    transaction.amount,
-    transaction.recipient,
     transitionTo,
   ]);
 
@@ -277,10 +276,6 @@ const StepPro = ({
         <Flex flexDirection="column" flex={1}>
           <Alert type="success" title="Transaction signed in quorum awesomely" />
           <Text mt={4} textAlign="center" variant="h2" style={{ wordBreak: "break-all" }}>
-            {signedShit}
-            {signedShit}
-            {signedShit}
-            {signedShit}
             {signedShit}
           </Text>
         </Flex>
