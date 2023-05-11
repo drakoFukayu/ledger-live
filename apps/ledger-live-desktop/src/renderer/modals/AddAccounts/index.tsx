@@ -267,7 +267,7 @@ class AddAccounts extends PureComponent<Props, State> {
       editedNames,
       flow,
     };
-    const title = pro ? "{PRO} Add account" : <Trans i18nKey="addAccounts.title" />;
+    const title = pro ? "🚀 Add account" : <Trans i18nKey="addAccounts.title" />;
     const errorSteps = err ? [2] : [];
     if (stepId === "chooseCurrency" && this.props.currency && !preventSkippingCurrencySelection) {
       stepId = "connectDevice";

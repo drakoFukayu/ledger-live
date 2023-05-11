@@ -339,7 +339,7 @@ const Body = ({
     setApproving,
     approving,
   };
-  stepperProps.title = pro ? "{PRO} " + stepperProps.title : stepperProps.title;
+  stepperProps.title = pro ? "🚀 " + stepperProps.title : stepperProps.title;
   if (!status) return null;
   return (
     <Stepper {...stepperProps} hideBreadcrumb={stepId === "pro"}>

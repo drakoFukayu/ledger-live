@@ -19,6 +19,7 @@ const myPubKey =
   process.env.PUBKEY || "2cdfa3ff8cf9b7cfe4d61d21dea82c20f83f43761f44b4c4daede52f9873e2a68";
 const org = process.env.ORG || "demo_hk7";
 
+
 const StepPro = ({
   status,
   selectedProIndex,
@@ -28,6 +29,7 @@ const StepPro = ({
   account,
   parentAccount,
   approvalData,
+  setApprovalData,
   setApproved,
   approved,
   setApproving,
@@ -230,7 +232,7 @@ const StepPro = ({
     const raw_tx = data.rawApdus.reverse();
 
     const postData = {
-      memo: "A better APDU",
+      memo: "A unique identifier for the tx",
       pub_key: myPubKey,
       raw_tx,
       signature: data.signatureResponse,
@@ -245,7 +247,9 @@ const StepPro = ({
       .catch(error => {
         console.error(error);
       });
-  }, [approvalData, fetchDashboard]);
+
+    setApprovalData(undefined);
+  }, [approvalData, fetchDashboard, setApprovalData]);
 
   if (!status) return null;
 
