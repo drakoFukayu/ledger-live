@@ -77,7 +77,6 @@ const StepPro = ({
               validators: transaction.approvals,
             };
           });
-          console.log(approvedTransactions);
           setApproved(approvedTransactions);
         })
         .catch(error => {
@@ -110,9 +109,12 @@ const StepPro = ({
 
       for (let i = 0; i < finalAPDUS.length; i++) {
         if (unmounted) return;
+
         signedOperation = await withDevice("")(transport => {
           console.log("APDU <=", finalAPDUS[i]);
-          return from(transport.exchange(Buffer.from(finalAPDUS[i], "hex")));
+          const apdu = Buffer.from(finalAPDUS[i], "hex");
+          if (!apdu) return;
+          return from(transport.exchange(apdu));
         }).toPromise();
         console.log("APDU =>", signedOperation.toString("hex"));
       }
@@ -289,6 +291,27 @@ const StepPro = ({
               ) : (
                 <Alert type="info" title="There are no pending approvals, try creating one" />
               )}
+              {approved.length ? (
+                <Box mt={5}>
+                  <Label>{"Broadcasted:"}</Label>
+                  {approved.map(({ memo, hash, validators }, index) => (
+                    <>
+                      <Item
+                        alreadyApproved={validators.some(
+                          validator => validator.device === myPubKey,
+                        )}
+                        isSelected={selectedProIndex === index}
+                        key={hash}
+                        hash={hash}
+                        memo={memo}
+                        validators={validators}
+                        onClick={() => wrappedOnSetSelectedProIndex(index)}
+                      />
+                      {index === approved.length - 1 ? null : <Divider />}
+                    </>
+                  ))}
+                </Box>
+              ) : null}
             </Box>
           )}
         </>

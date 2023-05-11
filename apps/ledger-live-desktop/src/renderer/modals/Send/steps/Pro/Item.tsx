@@ -1,12 +1,19 @@
 import React from "react";
 import styled from "styled-components";
-import { Flex, ProgressLoader, Text } from "@ledgerhq/react-ui";
+import { Flex, Icons, ProgressLoader, Text } from "@ledgerhq/react-ui";
 import { rgba } from "~/renderer/styles/helpers";
 import Ellipsis from "~/renderer/components/Ellipsis";
 
-const Wrapper = styled(Flex)<{ isSelected: boolean; alreadyApproved: boolean }>`
+const Wrapper = styled(Flex)<{ isSelected: boolean; alreadyApproved: boolean; sent: boolean }>`
   border: 1px solid
-    ${p => (p.alreadyApproved ? "green" : p.isSelected ? p.theme.colors.wallet : "transparent")};
+    ${p =>
+      p.sent
+        ? "p.theme.colors.neutral.c30"
+        : p.alreadyApproved
+        ? "green"
+        : p.isSelected
+        ? p.theme.colors.wallet
+        : "transparent"};
   padding: 8px;
   border-radius: 4px;
   cursor: ${p => (p.alreadyApproved ? "inherit" : "pointer")};
@@ -40,6 +47,7 @@ type Props = {
 };
 
 const Item = ({ alreadyApproved, memo, hash, validators, isSelected, onClick }: Props) => {
+  const sent = (validators.length as unknown) === 3;
   return (
     <Wrapper
       p={2}
@@ -48,13 +56,18 @@ const Item = ({ alreadyApproved, memo, hash, validators, isSelected, onClick }: 
       onClick={alreadyApproved ? undefined : onClick}
       alignItems="center"
       alreadyApproved={!!alreadyApproved}
+      sent={sent}
     >
       <Progress>
-        <ProgressLoader
-          showPercentage={false}
-          radius={16}
-          progress={(validators.length / 3) * 100}
-        />
+        {sent ? (
+          <Icons.CheckAloneMedium color="success.c50" size={24} />
+        ) : (
+          <ProgressLoader
+            showPercentage={false}
+            radius={16}
+            progress={(validators.length / 3) * 100}
+          />
+        )}
       </Progress>
       <Flex justifyContent="space-between" flex={1}>
         <Flex flexDirection="column" justifyContent="center">
