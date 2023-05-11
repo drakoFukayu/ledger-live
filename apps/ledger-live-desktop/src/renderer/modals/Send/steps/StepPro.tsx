@@ -24,13 +24,14 @@ const StepPro = ({
   setSelectedProIndex,
   pending,
   setPending,
-  approved,
-  setApproved,
+  account,
   approvalData,
   setApproving,
   approving,
 }: StepProps) => {
   const [signature, setSignature] = useState("");
+  const [finalAPDU, setFinalAPDU] = useState("");
+
   const wrappedOnSetSelectedProIndex = useCallback(
     newIndex => {
       // Toggle if reclicked;
@@ -46,7 +47,6 @@ const StepPro = ({
         .get(`${urlBase}/${org}/dashboard`)
         .then(response => {
           if (removed) return;
-          console.log(response.data);
           const transactions = response.data.pending_transactions;
           const pendingTransactions = transactions.map(transaction => {
             return {
@@ -56,17 +56,23 @@ const StepPro = ({
               validators: transaction.approvals,
             };
           });
-          console.log("wadus", pendingTransactions);
           setPending(pendingTransactions);
-          const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
-            return {
-              memo: transaction.memo,
-              hash: transaction.hash,
-              validators: transaction.approvals,
-            };
-          });
-          console.log(approvedTransactions);
-          setApproved(approvedTransactions);
+
+          // If part of the data contains a final apdu we can send it to the device and then broadcast it
+          // const hasFinalAPDU = "";
+          // if (hasFinalAPDU) {
+          //   setFinalAPDU("asdas");
+          // }
+
+          // const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
+          //   return {
+          //     memo: transaction.memo,
+          //     hash: transaction.hash,
+          //     validators: transaction.approvals,
+          //   };
+          // });
+          // console.log(approvedTransactions);
+          // setApproved(approvedTransactions);
         })
         .catch(error => {
           console.error(error);
@@ -77,11 +83,39 @@ const StepPro = ({
     return () => {
       removed = true;
     };
-  }, [setApproved, setPending]);
+  }, [setPending]);
 
   useEffect(() => {
-    console.log({ signature });
-  }, [signature]);
+    if (!finalAPDU) return;
+    async function sendApdus() {
+      const signedTx: any = await withDevice("")(transport => {
+        console.log("sending", finalAPDU);
+        return from(transport.exchange(Buffer.from(finalAPDU, "hex")));
+      }).toPromise();
+
+      // broadcast(signedOperation).then(
+      //     operation => {
+      //       if (!onConfirmationHandler) {
+      //         onOperationBroadcasted(operation);
+      //         transitionTo("confirmation");
+      //       } else {
+      //         dispatch(closeModal("MODAL_SEND"));
+      //         onConfirmationHandler(operation);
+      //       }
+      //     },
+      //     error => {
+      //       if (!onFailHandler) {
+      //         onTransactionError(error);
+      //         transitionTo("confirmation");
+      //       } else {
+      //         dispatch(closeModal("MODAL_SEND"));
+      //         onFailHandler(error);
+      //       }
+      //     },
+      //   );
+    }
+    sendApdus();
+  }, [finalAPDU]);
 
   useEffect(() => {
     // We are approving, we know the apdus that we need to send and we hope there's a device
@@ -145,7 +179,7 @@ const StepPro = ({
     // all the information and just need to send the apdus and get the response, so it's going to
     // be a separate step, or handled here, no idea.
     const data = JSON.parse(approvalData);
-    const signature = data.signatureResponse.slice(4, -4);
+
     // eslint-disable-next-line camelcase
     const raw_tx = data.rawApdus.reverse();
 
@@ -153,7 +187,7 @@ const StepPro = ({
       memo: "Some memo",
       pub_key: myPubKey,
       raw_tx,
-      signature,
+      signature: data.signatureResponse,
     };
 
     console.log(postData);
