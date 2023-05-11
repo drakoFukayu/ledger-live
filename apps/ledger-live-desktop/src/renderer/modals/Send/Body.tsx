@@ -188,6 +188,7 @@ const Body = ({
   const [transactionError, setTransactionError] = useState<Error | null>(null);
   const [selectedProIndex, setSelectedProIndex] = useState<number | null>(null);
   const [pending, setPending] = useState([]);
+  const [approved, setApproved] = useState([]);
   const [proInitiateData, setProInitiateData] = useState();
   const [approvalData, setApprovalData] = useState();
   const [approving, setApproving] = useState(false);
@@ -325,6 +326,9 @@ const Body = ({
 
     pending,
     setPending,
+
+    approved,
+    setApproved,
 
     proInitiateData,
     setProInitiateData,

@@ -22,6 +22,8 @@ const StepPro = ({
   setSelectedProIndex,
   pending,
   setPending,
+    approved,
+    setApproved,
   approvalData,
 }: StepProps) => {
   const wrappedOnSetSelectedProIndex = useCallback(
@@ -44,12 +46,22 @@ const StepPro = ({
           const pendingTransactions = transactions.map(transaction => {
             return {
               memo: transaction.memo,
-              hash: transaction.raw_tx,
+              hash: transaction.hash,
               validators: [transaction.approvals.length, 3],
             };
           });
           console.log(pendingTransactions);
           setPending(pendingTransactions);
+          const approvedTransactions = response.data.broadcasted_transactions.map(transaction => {
+            return {
+              memo: transaction.memo,
+              hash: transaction.hash,
+              validators: [transaction.approvals.length, 3],
+            };
+          });
+          console.log(approvedTransactions);
+          setApproved(approvedTransactions);
+
         })
         .catch(error => {
           console.error(error);
@@ -109,29 +121,55 @@ const StepPro = ({
           </Text>
         </Flex>
       ) : (
-        <Box mt={5}>
-          {pending.length ? (
-            <>
-              {" "}
-              <Label>{"Pending approvals"}</Label>
-              {pending.map(({ memo, memo2, hash, validators }, index) => (
-                <>
-                  <Item
-                    isSelected={selectedProIndex === index}
-                    key={hash}
-                    hash={hash}
-                    memo={memo}
-                    memo2={memo2}
-                    validators={validators}
-                    onClick={() => wrappedOnSetSelectedProIndex(index)}
-                  />
-                  {index === pending.length - 1 ? null : <Divider />}
-                </>
-              ))}
-            </>
-          ) : (
-            <Alert type="info" title="There are no pending approvals, try creating one" />
-          )}
+        <Box flow={4}>
+          <Box mt={5}>
+            {pending.length ? (
+              <>
+                {" "}
+                <Label>{"Pending approvals"}</Label>
+                {pending.map(({ memo, memo2, hash, validators }, index) => (
+                  <>
+                    <Item
+                      isSelected={selectedProIndex === index}
+                      key={hash}
+                      hash={`${validators.length} approvers required`}
+                      memo={`tx ${hash.substring(0, 10)}`}
+                      memo2=""
+                      validators={validators}
+                      onClick={() => wrappedOnSetSelectedProIndex(index)}
+                    />
+                    {index === pending.length - 1 ? null : <Divider />}
+                  </>
+                ))}
+              </>
+            ) : (
+              <Alert type="info" title="There are no pending approvals, try creating one" />
+            )}
+          </Box>
+          <Box mt={5}>
+            {approved.length ? (
+              <>
+                {" "}
+                <Label>{"Approved transactions"}</Label>
+                {approved.map(({ memo, memo2, hash, validators }, index) => (
+                  <>
+                    <Item
+                      isSelected={selectedProIndex === index}
+                      key={hash}
+                      hash={"approved"}
+                      memo={`tx ${hash.substring(0, 10)}`}
+                      memo2=""
+                      validators={validators}
+                      onClick={() => wrappedOnSetSelectedProIndex(index)}
+                    />
+                    {index === approved.length - 1 ? null : <Divider />}
+                  </>
+                ))}
+              </>
+            ) : (
+              <Alert type="info" title="There are no pending approvals, try creating one" />
+            )}
+          </Box>
         </Box>
       )}
     </Box>

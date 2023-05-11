@@ -60,6 +60,9 @@ export type StepProps = {
   pending?: any;
   setPending?: any;
 
+  approved?: any;
+  setApproved?: any;
+
   proInitiateData: string;
   setProInitiateData: (a: string) => void;
 
