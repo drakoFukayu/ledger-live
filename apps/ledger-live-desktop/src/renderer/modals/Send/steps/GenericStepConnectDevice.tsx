@@ -78,7 +78,6 @@ export default function StepConnectDevice({
       }}
       Result={Result}
       onResult={result => {
-        console.log("wadus", { proInitiateData, result });
         // Hijack the broadcast thing here, go back to the pro step with the
         // result, we can actually broadcast or do the final device interaction
         // there too to be as ugly as possible.

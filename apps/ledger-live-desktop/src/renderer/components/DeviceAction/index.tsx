@@ -544,9 +544,7 @@ export default function DeviceAction<R, H extends States, P>({
   const device = useSelector(getCurrentDevice);
   const hookState = action.useHook(device, request);
   const payload = action.mapResult(hookState);
-  useEffect(() => {
-    console.log("wadus", { payload, hookState });
-  }, [payload, hookState]);
+
   return (
     <DeviceActionDefaultRendering
       status={hookState}

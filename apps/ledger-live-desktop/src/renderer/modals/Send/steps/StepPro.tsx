@@ -107,12 +107,14 @@ const StepPro = ({
       // Send the data to the device
       let signedOperation: any;
       if (!finalAPDUS) return;
+
       for (let i = 0; i < finalAPDUS.length; i++) {
         if (unmounted) return;
         signedOperation = await withDevice("")(transport => {
-          console.log("sending", finalAPDUS[i]);
+          console.log("APDU <=", finalAPDUS[i]);
           return from(transport.exchange(Buffer.from(finalAPDUS[i], "hex")));
         }).toPromise();
+        console.log("APDU =>", signedOperation.toString("hex"));
       }
 
       if (unmounted) return;
@@ -135,7 +137,7 @@ const StepPro = ({
         raw_tx: rawTx,
       };
 
-      console.log(postData);
+      console.log("DONE", { postData });
 
       axios.post(`${urlBase}/${org}/transaction/DONE`, postData);
       setFinalAPDUS(undefined);
@@ -192,7 +194,6 @@ const StepPro = ({
 
           // The third approval returns an apdu array, if it's present, we can
           // send them to get a signed transaction and broadcast straightaway.
-          console.log("wadus", { response });
           if (response.data.apdus) {
             setFinalAPDUS(response.data.apdus);
           }
@@ -227,7 +228,7 @@ const StepPro = ({
     const raw_tx = data.rawApdus.reverse();
 
     const postData = {
-      memo: "Some memo",
+      memo: "A better APDU",
       pub_key: myPubKey,
       raw_tx,
       signature: data.signatureResponse,

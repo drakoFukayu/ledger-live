@@ -478,7 +478,7 @@ export function toAccountRaw(account: Account): AccountRaw {
     syncHash,
     nfts,
   } = account;
-  console.log("wadus", {id, pro})
+
   const res: AccountRaw = {
     id,
     pro,
