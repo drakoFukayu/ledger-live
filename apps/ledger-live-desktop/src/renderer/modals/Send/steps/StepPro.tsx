@@ -19,7 +19,6 @@ const myPubKey =
   process.env.PUBKEY || "2cdfa3ff8cf9b7cfe4d61d21dea82c20f83f43761f44b4c4daede52f9873e2a68";
 const org = process.env.ORG || "demo_hk7";
 
-
 const StepPro = ({
   status,
   selectedProIndex,
@@ -106,25 +105,30 @@ const StepPro = ({
 
     async function sendApdus() {
       // Send the data to the device
-      let signedOperation: any;
+      let signature: any;
       if (!finalAPDUS) return;
 
       for (let i = 0; i < finalAPDUS.length; i++) {
         if (unmounted) return;
 
-        signedOperation = await withDevice("")(transport => {
+        signature = await withDevice("")(transport => {
           console.log("APDU <=", finalAPDUS[i]);
           const apdu = Buffer.from(finalAPDUS[i], "hex");
           if (!apdu) return;
           return from(transport.exchange(apdu));
         }).toPromise();
-        console.log("APDU =>", signedOperation.toString("hex"));
+        console.log("APDU =>", signature.toString("hex"));
       }
 
       if (unmounted) return;
 
       // Broadcast the transaction
-      broadcast(signedOperation).then(
+      const rawTx = pending[selectedProIndex || 0].raw_tx;
+      // Rebuild the operation from the apdus
+      const operation = {};
+      // TODO Parse the JSON and populate the object :up:
+
+      broadcast({ operation, signature }).then(
         operation => {
           onOperationBroadcasted(operation);
           transitionTo("confirmation");
