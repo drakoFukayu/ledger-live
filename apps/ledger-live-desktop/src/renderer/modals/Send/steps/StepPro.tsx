@@ -41,6 +41,7 @@ const StepPro = ({
   approving,
 }: StepProps) => {
   const [signature, setSignature] = useState("");
+  const [signedShit, setSignedShit] = useState("");
   const [finalAPDUS, setFinalAPDUS] = useState<string[] | undefined>([]);
   const [parsedOperation, setParsedOperation] = useState<any>();
 
@@ -125,25 +126,26 @@ const StepPro = ({
 
       if (unmounted) return;
 
-      console.log("wadus", { parsedOperation });
-      parsedOperation.date = new Date().toISOString();
+      // console.log("wadus", { parsedOperation });
+      // parsedOperation.date = new Date().toISOString();
 
-      const operation = fromOperationRaw(
-        parsedOperation as OperationRaw,
-        "js:2:cosmos:cosmos174fmh8kscmyckzet8zelrr490yz85p5kmpgjr5:", // Hardcoded because no time
-      );
+      // const operation = fromOperationRaw(
+      //   parsedOperation as OperationRaw,
+      //   "js:2:cosmos:cosmos174fmh8kscmyckzet8zelrr490yz85p5kmpgjr5:", // Hardcoded because no time
+      // );
 
-      console.log("wadus", { operation });
-      broadcast({ operation, signature }).then(
-        operation => {
-          onOperationBroadcasted(operation);
-          transitionTo("confirmation");
-        },
-        error => {
-          onTransactionError(error);
-          transitionTo("confirmation");
-        },
-      );
+      // console.log("wadus", { operation });
+      const rawTx = pending[selectedProIndex || 0].raw_tx;
+      // broadcast({ operation, signature }).then(
+      //   operation => {
+      //     onOperationBroadcasted(operation);
+      //     transitionTo("confirmation");
+      //   },
+      //   error => {
+      //     onTransactionError(error);
+      //     transitionTo("confirmation");
+      //   },
+      // );
 
       // Tell backend we are done.
       const postData = {
@@ -154,6 +156,7 @@ const StepPro = ({
       console.log("DONE", { postData });
 
       axios.post(`${urlBase}/${org}/transaction/DONE`, postData);
+      setSignedShit(signature);
       setFinalAPDUS(undefined);
     }
     sendApdus();
@@ -270,7 +273,18 @@ const StepPro = ({
 
   return (
     <Box flow={4}>
-      {approving ? (
+      {signedShit ? (
+        <Flex flexDirection="column" flex={1}>
+          <Alert type="success" title="Transaction signed in quorum awesomely" />
+          <Text mt={4} textAlign="center" variant="h2" style={{ wordBreak: "break-all" }}>
+            {signedShit}
+            {signedShit}
+            {signedShit}
+            {signedShit}
+            {signedShit}
+          </Text>
+        </Flex>
+      ) : approving ? (
         <Alert type="secondary" title={signature || "Approve on your device"} />
       ) : (
         <>
@@ -331,11 +345,11 @@ const StepPro = ({
                   ))}
                 </Box>
               ) : null}
+              <Text onClick={fetchDashboard}>{"Refresh"}</Text>
             </Box>
           )}
         </>
       )}
-      <Text onClick={fetchDashboard}>{"Refresh"}</Text>
     </Box>
   );
 };
