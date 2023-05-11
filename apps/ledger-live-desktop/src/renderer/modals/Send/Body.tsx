@@ -190,6 +190,7 @@ const Body = ({
   const [pending, setPending] = useState([]);
   const [proInitiateData, setProInitiateData] = useState();
   const [approvalData, setApprovalData] = useState();
+  const [approving, setApproving] = useState(false);
 
   const [signed, setSigned] = useState(false);
   const currency = account ? getAccountCurrency(account) : undefined;
@@ -330,6 +331,7 @@ const Body = ({
 
     setApprovalData,
     approvalData,
+    setApproving,
   };
   stepperProps.title = pro ? "{PRO} " + stepperProps.title : stepperProps.title;
   if (!status) return null;

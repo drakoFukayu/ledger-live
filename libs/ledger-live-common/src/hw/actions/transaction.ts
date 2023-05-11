@@ -24,6 +24,7 @@ type State = {
   deviceStreamingProgress: number | null | undefined;
   transactionSignError: Error | null | undefined;
   signatureResponse: string | null | undefined;
+  rawApdus: string[] | undefined;
 };
 type TransactionState = AppState & State;
 type TransactionRequest = {
@@ -44,6 +45,7 @@ type TransactionResult =
     }
   | {
       signatureResponse: string;
+      rawApdus: string[] | undefined;
     }
   | {
       transactionSignError: Error;
@@ -58,6 +60,7 @@ const mapResult = ({
   device,
   signedOperation,
   signatureResponse,
+  rawApdus,
   transactionSignError,
 }: TransactionState): TransactionResult | null | undefined =>
   signedOperation && device
@@ -68,6 +71,7 @@ const mapResult = ({
     : signatureResponse
     ? {
         signatureResponse,
+        rawApdus,
       }
     : transactionSignError
     ? {
@@ -80,6 +84,7 @@ type Event =
   | {
       type: "signed-pro";
       signatureResponse: string;
+      rawApdus: string[];
     }
   | {
       type: "error";
@@ -88,6 +93,7 @@ type Event =
 const initialState = {
   signedOperation: null,
   signatureResponse: null,
+  rawApdus: undefined,
   deviceSignatureRequested: false,
   deviceStreamingProgress: null,
   transactionSignError: null,
@@ -116,6 +122,7 @@ const reducer = (state: State, e: Event): State => {
         deviceSignatureRequested: false,
         deviceStreamingProgress: null,
         signatureResponse: e.signatureResponse,
+        rawApdus: e.rawApdus,
       };
 
     case "device-signature-requested":

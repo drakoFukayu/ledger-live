@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import { StepProps } from "../types";
@@ -11,8 +11,10 @@ import { getCryptoCurrencyById } from "@ledgerhq/coin-framework/currencies";
 import { useDispatch } from "react-redux";
 import { openModal } from "~/renderer/actions/modals";
 
-const myPubKey = "2cdfa3ff8cf9b7cfe4d61d21dea82c20f83f43761f44b4c4daede52f9873e2a68";
-const org = "test_hk_4";
+const urlBase = "https://ledger-live-pro.minivault.ledger-sbx.com/router";
+const myPubKey =
+  process.env.PUBKEY || "2cdfa3ff8cf9b7cfe4d61d21dea82c20f83f43761f44b4c4daede52f9873e2a68";
+const org = process.env.ORG || "demo_hk7";
 
 const StepPro = ({
   status,
@@ -30,26 +32,69 @@ const StepPro = ({
     [selectedProIndex, setSelectedProIndex],
   );
 
-  useEffect(() => {
-    axios
-      .get(`https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/dashboard`)
-      .then(response => {
-        console.log(response.data);
-        const transactions = response.data.pending_transactions;
-        const pendingTransactions = transactions.map(transaction => {
-          return {
-            memo: transaction.memo,
-            hash: transaction.raw_tx,
-            validators: [transaction.approvals.length, 3],
-          };
+  const fetchDashboard = useCallback(() => {
+    let removed = false;
+    async function asyncFetch() {
+      axios
+        .get(`${urlBase}/${org}/dashboard`)
+        .then(response => {
+          if (removed) return;
+          console.log(response.data);
+          const transactions = response.data.pending_transactions;
+          const pendingTransactions = transactions.map(transaction => {
+            return {
+              memo: transaction.memo,
+              hash: transaction.raw_tx,
+              validators: [transaction.approvals.length, 3],
+            };
+          });
+          console.log(pendingTransactions);
+          setPending(pendingTransactions);
+        })
+        .catch(error => {
+          console.error(error);
         });
-        console.log(pendingTransactions);
-        setPending(pendingTransactions);
+    }
+
+    asyncFetch();
+    return () => {
+      removed = true;
+    };
+  }, [setPending]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  useEffect(() => {
+    if (!approvalData) return;
+    // Once we have the approval data, notify the backend. For the approval flow we already have
+    // all the information and just need to send the apdus and get the response, so it's going to
+    // be a separate step, or handled here, no idea.
+    const data = JSON.parse(approvalData);
+    const signature = data.signatureResponse.slice(4, -4);
+    // eslint-disable-next-line camelcase
+    const raw_tx = data.rawApdus.reverse();
+
+    const postData = {
+      memo: "Some memo",
+      pub_key: myPubKey,
+      raw_tx,
+      signature,
+    };
+
+    console.log(postData);
+
+    axios
+      .post(`${urlBase}/${org}/transaction/initiate`, postData)
+      .then(response => {
+        // FIXME, do we need to do anything with the response?
+        fetchDashboard();
       })
       .catch(error => {
         console.error(error);
       });
-  }, [setPending]);
+  }, [approvalData, fetchDashboard]);
 
   if (!status) return null;
 
@@ -97,30 +142,13 @@ export const StepProFooter = ({
   selectedProIndex,
   setProInitiateData,
   transitionTo,
-  pending,
   closeModal,
+  setApproving,
 }: StepProps) => {
   const dispatch = useDispatch();
-  const onApprove = async () => {
-    // transitionTo("device"); to do when we have the app
-    // api call after the device thinigy
 
-    const data = {
-      pub_key: myPubKey,
-      raw_tx: pending[selectedProIndex].hash,
-      signature: "0xsig3",
-    };
-    axios
-      .post(
-        `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/approve`,
-        data,
-      )
-      .then(response => {
-        console.log(response.data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+  const onApprove = async () => {
+    setApproving(true);
   };
 
   const onAddAccount = useCallback(() => {
@@ -137,49 +165,9 @@ export const StepProFooter = ({
   }, [closeModal, dispatch]);
 
   const onNewTransaction = useCallback(() => {
-    // transitionTo("recipient"); to do when we have the app
-    // api call after the device thinigy
-    const data = {
-      memo: "test aljdasjdtxe",
-      pub_key: myPubKey,
-      raw_tx: "0xoeesdfrere",
-      signature: "0xsig3",
-    };
-    // Ignoring the axios call below, once we have that info we need, set it on the Body.tsx
-    // file <- so we can retrieve it on further steps, then move to the recipient one and
-    // continue building the transaction.
+    // The API call is done when we get the data from the device, not now.
     setProInitiateData("something");
     transitionTo("recipient"); // We will follow a normal send flow until the device step.
-
-    // axios
-    //   .post(
-    //     `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
-    //     data,
-    //   )
-    //   .then(response => {
-    //     console.log(response.data);
-    //     // then approve tx
-    //     const approveData = {
-    //       pub_key: myPubKey,
-    //       raw_tx: "0xoeereresd",
-    //       signature: "0xsig3w",
-    //     };
-    //     axios
-    //       .post(
-    //         `https://ledger-live-pro.minivault.ledger-sbx.com/router/${org}/transaction/initiate`,
-    //         approveData,
-    //       )
-    //       .then(response => {
-    //         console.log(response.data);
-    //         setProTx
-    //       })
-    //       .catch(error => {
-    //         console.error(error);
-    //       });
-    //   })
-    //   .catch(error => {
-    //     console.error(error);
-    //   });
   }, [setProInitiateData, transitionTo]);
 
   return (

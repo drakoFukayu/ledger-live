@@ -23,7 +23,7 @@ listen((log) => {
   // eslint-disable-next-line default-case
   switch (log.type) {
     case "apdu":
-      apdus.push(log.message?.substring(3) || "");
+      apdus.push(log.message || "");
   }
 });
 
@@ -93,10 +93,22 @@ const signOperation = ({
           // Shut up shut up shut up! I am not forking the library if I can avoid it.
           // and if this works I can avoid it, just complete the flow, emit an event
           // get the data, be done with it. Someone smart will make it pretty.
-          const signatureResponse = apdus.pop();
+          const signatureResponse = apdus.pop()?.substring(3);
+
+          //Go back until the `5500000000` apdu, and return all of them
+          const rawApdus: string[] = [];
+          let a: string | undefined = "";
+          while ((a = apdus.pop())) {
+            if (!a.startsWith("=> ")) continue;
+            const apdu = a.substring(3);
+            rawApdus.push(apdu);
+            if (apdu === "5500000000") break;
+          }
+
           o.next({
             type: "signed-pro",
             signatureResponse,
+            rawApdus,
           });
           return;
         }
