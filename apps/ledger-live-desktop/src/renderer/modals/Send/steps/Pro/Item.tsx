@@ -48,13 +48,13 @@ const Item = ({ alreadyApproved, memo, memo2, hash, validators, isSelected, onCl
       isSelected={isSelected}
       onClick={alreadyApproved ? undefined : onClick}
       alignItems="center"
-      alreadyApproved={alreadyApproved}
+      alreadyApproved={!!alreadyApproved}
     >
       <Progress>
         <ProgressLoader
           showPercentage={false}
           radius={16}
-          progress={(validators[0] / validators[1]) * 100}
+          progress={(validators.length / 3) * 100}
         />
       </Progress>
       <Flex justifyContent="space-between" flex={1}>

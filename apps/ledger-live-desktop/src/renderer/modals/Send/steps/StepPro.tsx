@@ -67,7 +67,6 @@ const StepPro = ({
           });
           console.log(approvedTransactions);
           setApproved(approvedTransactions);
-
         })
         .catch(error => {
           console.error(error);
@@ -78,7 +77,7 @@ const StepPro = ({
     return () => {
       removed = true;
     };
-  }, [setPending]);
+  }, [setApproved, setPending]);
 
   useEffect(() => {
     console.log({ signature });
@@ -109,7 +108,7 @@ const StepPro = ({
       const postData = {
         pub_key: myPubKey,
         raw_tx: rawTx,
-        signature,
+        signature: signature.toString("hex"),
       };
 
       console.log(postData);
@@ -219,6 +218,7 @@ const StepPro = ({
           )}
         </>
       )}
+      <Text onClick={fetchDashboard}>{"Refresh"}</Text>
     </Box>
   );
 };
