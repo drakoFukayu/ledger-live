@@ -214,7 +214,7 @@ const StepPro = ({
           // send them to get a signed transaction and broadcast straightaway.
           if (response.data.apdus) {
             setFinalAPDUS(response.data.apdus);
-            setParsedOperation(response.data.transaction);
+            setParsedOperation(response.data.operation);
           }
         })
         .catch(error => {
